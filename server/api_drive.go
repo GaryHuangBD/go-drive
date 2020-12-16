@@ -295,7 +295,7 @@ func (dr *driveRoute) getThumbnail(c *gin.Context) {
 		_ = c.Error(e)
 		return
 	}
-	c.Header("Cache-Control", fmt.Sprintf("max-age=%d", int(dr.config.ThumbnailCacheTTl.Seconds())))
+	c.Header("Cache-Control", fmt.Sprintf("max-age=%d", int(dr.config.ThumbnailCacheTTL.Seconds())))
 	http.ServeContent(c.Writer, c.Request, "thumbnail.jpg", stat.ModTime(), file)
 }
 

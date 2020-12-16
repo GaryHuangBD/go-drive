@@ -19,8 +19,6 @@ var (
 )
 
 const (
-	DbType     = "sqlite3"
-	DbFilename = "data.db"
 	LocalFsDir = "local"
 	Listen     = ":8089"
 )
@@ -40,11 +38,13 @@ func InitConfig(ch *registry.ComponentsHolder) (Config, error) {
 	}
 
 	flag.StringVar(&config.Listen, "l", config.Listen, "address listen on")
-	flag.StringVar(&config.dataDir, "d", config.dataDir, "path to the data dir")
-	flag.StringVar(&config.resDir, "s", config.resDir, "path to the static files")
-	flag.BoolVar(&config.freeFs, "f", config.freeFs, "enable unlimited local fs drive(absolute path)")
+	flag.StringVar(&config.DBType, "db", config.DBType, "db type")
+	flag.StringVar(&config.DBConnectStr, "db-connect", config.DBConnectStr, "db connect string")
+	flag.StringVar(&config.DataDir, "d", config.DataDir, "path to the data dir")
+	flag.StringVar(&config.ResDir, "s", config.ResDir, "path to the static files")
+	flag.BoolVar(&config.FreeFs, "f", config.FreeFs, "enable unlimited local fs drive(absolute path)")
 
-	flag.StringVar(&config.langDir, "lang-dir", config.langDir, "languages configuration folder")
+	flag.StringVar(&config.LangDir, "lang-dir", config.LangDir, "languages configuration folder")
 	flag.StringVar(&config.DefaultLang, "lang", config.DefaultLang, "default language code")
 
 	flag.StringVar(&config.OAuthRedirectURI, "oauth-redirect-uri", config.OAuthRedirectURI, "OAuth2 redirect_uri")
@@ -54,7 +54,7 @@ func InitConfig(ch *registry.ComponentsHolder) (Config, error) {
 	flag.Int64Var(&config.ThumbnailMaxSize, "thumbnail-max-size", config.ThumbnailMaxSize, "maximum file size to create thumbnail")
 	flag.IntVar(&config.ThumbnailMaxPixels, "thumbnail-max-pixels", config.ThumbnailMaxPixels, "maximum pixels(W*H) of original image to thumbnails")
 	flag.IntVar(&config.ThumbnailConcurrent, "thumbnail-concurrent", config.ThumbnailConcurrent, "maximum number of concurrent creation of thumbnails")
-	flag.DurationVar(&config.ThumbnailCacheTTl, "thumbnail-cache-ttl", config.ThumbnailCacheTTl, "thumbnail cache validity")
+	flag.DurationVar(&config.ThumbnailCacheTTL, "thumbnail-cache-ttl", config.ThumbnailCacheTTL, "thumbnail cache validity")
 
 	flag.IntVar(&config.MaxConcurrentTask, "max-concurrent-task", config.MaxConcurrentTask, "maximum concurrent task(copy, move, upload, delete files)")
 
@@ -68,8 +68,8 @@ func InitConfig(ch *registry.ComponentsHolder) (Config, error) {
 		os.Exit(0)
 	}
 
-	if _, e := os.Stat(config.dataDir); os.IsNotExist(e) {
-		return config, errors.New(fmt.Sprintf("dataDir '%s' does not exist", config.dataDir))
+	if _, e := os.Stat(config.DataDir); os.IsNotExist(e) {
+		return config, errors.New(fmt.Sprintf("DataDir '%s' does not exist", config.DataDir))
 	}
 	tempDir, e := config.GetDir("temp", true)
 	if e != nil {
@@ -82,46 +82,48 @@ func InitConfig(ch *registry.ComponentsHolder) (Config, error) {
 }
 
 type Config struct {
-	Listen  string
-	dataDir string
+	Listen       string `required:"true" `
+	DBType       string `required:"true" yaml:"db.type"`
+	DBConnectStr string `required:"true" yaml:"db.connect"`
+	DataDir      string `default:"./"  yaml:"data.dir"`
 	// static files(web) dir
-	resDir string
+	ResDir string       `default:"./web" yaml:"resource.dir"`
 	// unlimited fs drive path,
-	// fs drive path will be limited in dataDir/local if freeFs is false
-	freeFs bool
+	// fs drive path will be limited in DataDir/local if FreeFs is false
+	FreeFs bool         `default:"false" yaml:"free.fs"`
 
-	langDir string
+	LangDir string      `default:"./lang" yaml:"lang.dir"`
 	// DefaultLang is the default language
-	DefaultLang string
+	DefaultLang string  `default:"en-US" yaml:"default.lang"`
 
-	TempDir string
+	TempDir string      `yaml:"-"`
 
-	OAuthRedirectURI string
+	OAuthRedirectURI string `yaml:"oauth.uri"`
 
 	// ProxyMaxSize is the maximum file size can be proxied when
 	// the API call explicitly specifies
 	// that it needs to be proxied.
 	// The size is unlimited when maxProxySize is <= 0
-	ProxyMaxSize int64
+	ProxyMaxSize int64                 `default:"1048576" yaml:"proxy.maxSize"`
 
 	// ThumbnailMaxSize is the maximum file size(MB) to create thumbnail
-	ThumbnailMaxSize    int64
-	ThumbnailCacheTTl   time.Duration
-	ThumbnailConcurrent int
-	ThumbnailMaxPixels  int
+	ThumbnailMaxSize    int64          `default:"16777216" yaml:"thumbnail.maxSize"`
+	ThumbnailCacheTTL   time.Duration  `default:"48h" yaml:"thumbnail.cacheTTL"`
+	ThumbnailConcurrent int            `default:"16" yaml:"thumbnail.concurrent"`
+	ThumbnailMaxPixels  int            `default:"22369621" yaml:"thumbnail.maxPixels"`
 
-	MaxConcurrentTask int
+	MaxConcurrentTask int              `default:"100" yaml:"maxConcurrentTask"`
 
-	TokenValidity time.Duration
-	TokenRefresh  bool
+	TokenValidity time.Duration        `default:"2h" yaml:"tokenValidity"`
+	TokenRefresh  bool                 `default:"true" yaml:"tokenRefresh"`
 }
 
 func (c Config) GetDB() (string, string) {
-	return DbType, path.Join(c.dataDir, DbFilename)
+	return c.DBType, path.Join(c.DataDir, c.DBConnectStr)
 }
 
 func (c Config) GetDir(name string, create bool) (string, error) {
-	name = filepath.Join(c.dataDir, name)
+	name = filepath.Join(c.DataDir, name)
 	if create {
 		if _, e := os.Stat(name); os.IsNotExist(e) {
 			if e := os.Mkdir(name, 0755); e != nil {
@@ -133,15 +135,15 @@ func (c Config) GetDir(name string, create bool) (string, error) {
 }
 
 func (c Config) GetResDir() string {
-	return c.resDir
+	return c.ResDir
 }
 
 func (c Config) GetLangDir() string {
-	return c.langDir
+	return c.LangDir
 }
 
 func (c Config) GetLocalFsDir() (string, error) {
-	if c.freeFs {
+	if c.FreeFs {
 		return "", nil
 	}
 	return c.GetDir(LocalFsDir, true)

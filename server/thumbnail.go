@@ -58,7 +58,7 @@ func NewThumbnail(config common.Config, ch *registry.ComponentsHolder) (*Thumbna
 	}
 	t := &Thumbnail{
 		cacheDir:  dir,
-		validity:  config.ThumbnailCacheTTl,
+		validity:  config.ThumbnailCacheTTL,
 		maxPixels: config.ThumbnailMaxPixels,
 		maxSize:   config.ThumbnailMaxSize,
 	}
