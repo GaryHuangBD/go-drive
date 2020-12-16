@@ -1,0 +1,32 @@
+Listen: ":8089"
+dataDir: "./"
+
+// static files(web) dir
+resDir: "./web"
+
+// unlimited fs drive path,
+// fs drive path will be limited in dataDir/local if freeFs is false
+freeFs: false
+
+langDir: "./lang"
+// DefaultLang is the default language
+DefaultLang: "en-US"
+
+OAuthRedirectURI: "https://go-drive.top/oauth_callback"
+
+// ProxyMaxSize is the maximum file size can be proxied when
+// the API call explicitly specifies
+// that it needs to be proxied.
+// The size is unlimited when maxProxySize is <= 0
+ProxyMaxSize: 1048576
+
+// ThumbnailMaxSize is the maximum file size(MB) to create thumbnail
+ThumbnailMaxSize: 16777216
+ThumbnailCacheTTl: 16777216
+ThumbnailConcurrent: 16777216
+ThumbnailMaxPixels: 48h
+
+MaxConcurrentTask: 100
+
+TokenValidity: 2h
+TokenRefresh: true

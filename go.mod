@@ -10,6 +10,7 @@ require (
 	github.com/google/go-cmp v0.5.2 // indirect
 	github.com/google/uuid v1.1.2
 	github.com/google/wire v0.4.0
+	github.com/jinzhu/configor v1.2.1 // indirect
 	github.com/jinzhu/gorm v1.9.15
 	github.com/mattn/go-sqlite3 v2.0.3+incompatible
 	github.com/nfnt/resize v0.0.0-20180221191011-83c6a9932646

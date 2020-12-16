@@ -1,3 +1,5 @@
+GOARCH := $(shell go env GOARCH)
+GOOS := $(shell go env GOOS)
 
 work_dir = build
 target_name = go-drive_$(GOOS)_$(GOARCH)
@@ -7,7 +9,7 @@ all: $(build_dir)/$(target_name).tar.gz
 zip: $(build_dir)/$(target_name).zip
 
 # tar.gz
-$(build_dir)/$(target_name).tar.gz: $(build_dir)/go-drive $(build_dir)/web $(build_dir)/lang
+$(build_dir)/$(target_name).tar.gz: $(build_dir)/go-drive $(build_dir)/config $(build_dir)/web $(build_dir)/lang
 	cd $(work_dir); tar acf $(target_name).tar.gz --owner=0 --group=0 $(target_name)
 
 # zip for windows
@@ -17,6 +19,9 @@ $(build_dir)/$(target_name).zip: $(build_dir)/go-drive $(build_dir)/web $(build_
 $(build_dir)/go-drive: $(build_dir)
 	go build -o $(build_dir) -ldflags \
 		"-X go-drive/common.version=${BUILD_VERSION} -X go-drive/common.hash=$(shell git rev-parse HEAD) -X go-drive/common.build=$(shell date +'%Y%m%d')"
+
+$(build_dir)/config: $(build_dir)
+	cp docs/config.yml $(build_dir)/
 
 $(build_dir)/web: $(build_dir) web/dist
 	cp -R web/dist $(build_dir)/web

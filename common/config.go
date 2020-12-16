@@ -4,6 +4,7 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"github.com/jinzhu/configor"
 	"go-drive/common/registry"
 	"os"
 	"path"
@@ -30,27 +31,35 @@ func InitConfig(ch *registry.ComponentsHolder) (Config, error) {
 	var v bool
 	flag.BoolVar(&v, "v", false, "print version")
 
-	flag.StringVar(&config.Listen, "l", Listen, "address listen on")
-	flag.StringVar(&config.dataDir, "d", "./", "path to the data dir")
-	flag.StringVar(&config.resDir, "s", "./web", "path to the static files")
-	flag.BoolVar(&config.freeFs, "f", false, "enable unlimited local fs drive(absolute path)")
+	var cfg string
+	flag.StringVar(&cfg, "c", "config.yml", "config file path")
+	if cfgFile, err := os.Stat(cfg); err == nil && !cfgFile.IsDir() {
+		if err = configor.Load(&config, cfg); err != nil {
+			return config, errors.Unwrap(err)
+		}
+	}
 
-	flag.StringVar(&config.langDir, "lang-dir", "./lang", "languages configuration folder")
-	flag.StringVar(&config.DefaultLang, "lang", "en-US", "default language code")
+	flag.StringVar(&config.Listen, "l", config.Listen, "address listen on")
+	flag.StringVar(&config.dataDir, "d", config.dataDir, "path to the data dir")
+	flag.StringVar(&config.resDir, "s", config.resDir, "path to the static files")
+	flag.BoolVar(&config.freeFs, "f", config.freeFs, "enable unlimited local fs drive(absolute path)")
 
-	flag.StringVar(&config.OAuthRedirectURI, "oauth-redirect-uri", "https://go-drive.top/oauth_callback", "OAuth2 redirect_uri")
+	flag.StringVar(&config.langDir, "lang-dir", config.langDir, "languages configuration folder")
+	flag.StringVar(&config.DefaultLang, "lang", config.DefaultLang, "default language code")
 
-	flag.Int64Var(&config.ProxyMaxSize, "proxy-max-size", 1*1024*1024, "maximum file size that can be proxied")
+	flag.StringVar(&config.OAuthRedirectURI, "oauth-redirect-uri", config.OAuthRedirectURI, "OAuth2 redirect_uri")
 
-	flag.Int64Var(&config.ThumbnailMaxSize, "thumbnail-max-size", 16*1024*1024, "maximum file size to create thumbnail")
-	flag.IntVar(&config.ThumbnailMaxPixels, "thumbnail-max-pixels", 22369621, "maximum pixels(W*H) of original image to thumbnails")
-	flag.IntVar(&config.ThumbnailConcurrent, "thumbnail-concurrent", 16, "maximum number of concurrent creation of thumbnails")
-	flag.DurationVar(&config.ThumbnailCacheTTl, "thumbnail-cache-ttl", 48*time.Hour, "thumbnail cache validity")
+	flag.Int64Var(&config.ProxyMaxSize, "proxy-max-size", config.ProxyMaxSize, "maximum file size that can be proxied")
 
-	flag.IntVar(&config.MaxConcurrentTask, "max-concurrent-task", 100, "maximum concurrent task(copy, move, upload, delete files)")
+	flag.Int64Var(&config.ThumbnailMaxSize, "thumbnail-max-size", config.ThumbnailMaxSize, "maximum file size to create thumbnail")
+	flag.IntVar(&config.ThumbnailMaxPixels, "thumbnail-max-pixels", config.ThumbnailMaxPixels, "maximum pixels(W*H) of original image to thumbnails")
+	flag.IntVar(&config.ThumbnailConcurrent, "thumbnail-concurrent", config.ThumbnailConcurrent, "maximum number of concurrent creation of thumbnails")
+	flag.DurationVar(&config.ThumbnailCacheTTl, "thumbnail-cache-ttl", config.ThumbnailCacheTTl, "thumbnail cache validity")
 
-	flag.DurationVar(&config.TokenValidity, "token-validity", 2*time.Hour, "token validity")
-	flag.BoolVar(&config.TokenRefresh, "token-refresh", true, "enable auto refresh token")
+	flag.IntVar(&config.MaxConcurrentTask, "max-concurrent-task", config.MaxConcurrentTask, "maximum concurrent task(copy, move, upload, delete files)")
+
+	flag.DurationVar(&config.TokenValidity, "token-validity", config.TokenValidity, "token validity")
+	flag.BoolVar(&config.TokenRefresh, "token-refresh", config.TokenRefresh, "enable auto refresh token")
 
 	flag.Parse()
 
