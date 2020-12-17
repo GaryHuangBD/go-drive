@@ -7,7 +7,6 @@ import (
 	"github.com/jinzhu/configor"
 	"go-drive/common/registry"
 	"os"
-	"path"
 	"path/filepath"
 	"time"
 )
@@ -114,12 +113,9 @@ type Config struct {
 
 	MaxConcurrentTask int              `default:"100" yaml:"maxConcurrentTask"`
 
+	TokenType     string               `default:"file" yaml:"tokenType"`
 	TokenValidity time.Duration        `default:"2h" yaml:"tokenValidity"`
 	TokenRefresh  bool                 `default:"true" yaml:"tokenRefresh"`
-}
-
-func (c Config) GetDB() (string, string) {
-	return c.DBType, path.Join(c.DataDir, c.DBConnectStr)
 }
 
 func (c Config) GetDir(name string, create bool) (string, error) {

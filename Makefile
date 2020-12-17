@@ -8,6 +8,8 @@ build_dir = $(work_dir)/$(target_name)
 all: $(build_dir)/$(target_name).tar.gz
 zip: $(build_dir)/$(target_name).zip
 
+build: $(build_dir)/go-drive
+
 # tar.gz
 $(build_dir)/$(target_name).tar.gz: $(build_dir)/go-drive $(build_dir)/config $(build_dir)/web $(build_dir)/lang
 	cd $(work_dir); tar acf $(target_name).tar.gz --owner=0 --group=0 $(target_name)

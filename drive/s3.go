@@ -58,6 +58,7 @@ type S3Drive struct {
 func NewS3Drive(ctx context.Context, config drive_util.DriveConfig,
 	utils drive_util.DriveUtils) (types.IDrive, error) {
 	id := config["id"]
+	checkBucket := config["check_bucket"]
 	secret := config["secret"]
 	bucket := config["bucket"]
 	pathStyle := config["path_style"]
@@ -93,7 +94,10 @@ func NewS3Drive(ctx context.Context, config drive_util.DriveConfig,
 	} else {
 		d.cache = utils.CreateCache(d.deserializeEntry, nil)
 	}
-	return d, d.check(ctx)
+	if checkBucket != "" {
+		return d, d.check(ctx)
+	}
+	return d, nil
 }
 
 func (s *S3Drive) check(ctx context.Context) error {

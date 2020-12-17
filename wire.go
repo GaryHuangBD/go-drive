@@ -10,10 +10,10 @@ import (
 	"go-drive/common/i18n"
 	"go-drive/common/registry"
 	"go-drive/common/task"
-	"go-drive/common/types"
 	"go-drive/common/utils"
 	"go-drive/drive"
 	"go-drive/server"
+	"go-drive/server/token"
 	"go-drive/storage"
 )
 
@@ -31,8 +31,7 @@ func Initialize(ctx context.Context, ch *registry.ComponentsHolder) (*gin.Engine
 		wire.Bind(new(task.Runner), new(*task.TunnyRunner)),
 		task.NewTunnyRunner,
 		utils.NewSigner,
-		wire.Bind(new(types.TokenStore), new(*server.FileTokenStore)),
-		server.NewFileTokenStore,
+		token.NewTokenStore,
 		server.NewChunkUploader,
 		server.NewThumbnail,
 		drive.NewRootDrive,

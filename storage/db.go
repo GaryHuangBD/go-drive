@@ -3,6 +3,7 @@ package storage
 import (
 	"github.com/jinzhu/gorm"
 	_ "github.com/mattn/go-sqlite3"
+	_ "github.com/jinzhu/gorm/dialects/mysql"
 	"go-drive/common"
 	"go-drive/common/registry"
 	"go-drive/common/types"
@@ -18,9 +19,8 @@ var initSQL = []string{
 }
 
 func NewDB(config common.Config, ch *registry.ComponentsHolder) (*DB, error) {
-	dialect, args := config.GetDB()
 
-	db, e := gorm.Open(dialect, args)
+	db, e := gorm.Open(config.DBType, config.DBConnectStr)
 	if e != nil {
 		return nil, e
 	}

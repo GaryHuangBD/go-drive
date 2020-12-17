@@ -1,16 +1,21 @@
-package server
+package token
 
 import (
+	"fmt"
 	"github.com/google/uuid"
 	cmap "github.com/orcaman/concurrent-map"
+	"go-drive/common"
 	"go-drive/common/errors"
 	"go-drive/common/i18n"
+	"go-drive/common/registry"
 	"go-drive/common/types"
 	"go-drive/common/utils"
 	"log"
 	"sync"
 	"time"
 )
+
+const MemTokenStoreName = "mem"
 
 type MemTokenStore struct {
 	store cmap.ConcurrentMap
@@ -30,17 +35,18 @@ type MemTokenStore struct {
 // - autoRefresh: refresh token by adding `validity` after each token access
 //
 // - cleanupDuration: cleanup invalid token each `cleanupDuration`
-func NewMemTokenStore(validity time.Duration, autoRefresh bool, cleanupDuration time.Duration) *MemTokenStore {
-	if cleanupDuration <= 0 {
-		panic("invalid cleanupDuration")
-	}
+func NewMemTokenStore(config common.Config, ch *registry.ComponentsHolder) types.TokenStore {
+
 	tokenStore := &MemTokenStore{
 		store:       cmap.New(),
-		validity:    validity,
-		autoRefresh: autoRefresh,
+		validity:    config.TokenValidity,
+		autoRefresh: config.TokenRefresh,
 		mux:         &sync.Mutex{},
 	}
-	tokenStore.tickerStop = utils.TimeTick(tokenStore.clean, cleanupDuration)
+
+	tokenStore.tickerStop = utils.TimeTick(tokenStore.clean, config.TokenValidity)
+	ch.Add("tokenStore", tokenStore)
+
 	return tokenStore
 }
 
@@ -120,4 +126,25 @@ func (m *MemTokenStore) clean() {
 func (m *MemTokenStore) Dispose() error {
 	m.tickerStop()
 	return nil
+}
+
+func (m *MemTokenStore) Status() (string, types.SM, error) {
+	total := 0
+	active := 0
+	keys := m.store.Keys()
+	for i:= 0; i < len(keys); i++ {
+		total++
+		t, ok := m.store.Get(keys[i])
+		if ok {
+			tt := t.(types.Token)
+			if time.Now().Unix() < tt.ExpiredAt {
+				active++
+			}
+		}
+	}
+
+	return "Session", types.SM{
+		"Total":  fmt.Sprintf("%d", total),
+		"Active": fmt.Sprintf("%d", active),
+	}, nil
 }

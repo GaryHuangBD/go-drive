@@ -1,4 +1,4 @@
-package server
+package token
 
 import (
 	"encoding/gob"
@@ -17,7 +17,7 @@ import (
 	"time"
 )
 
-const sessionPrefix = "s_"
+const FileTokenStoreName = "file"
 
 type FileTokenStore struct {
 	root        string
@@ -27,19 +27,19 @@ type FileTokenStore struct {
 }
 
 // NewFileTokenStore creates a FileTokenStore
-func NewFileTokenStore(config common.Config, ch *registry.ComponentsHolder) (*FileTokenStore, error) {
+func NewFileTokenStore(config common.Config, ch *registry.ComponentsHolder) (types.TokenStore, error) {
 	root, e := config.GetDir("sessions", true)
 	if e != nil {
 		return nil, e
 	}
-	ft := &FileTokenStore{
+	ft := FileTokenStore{
 		root:        root,
 		autoRefresh: config.TokenRefresh,
 		validity:    config.TokenValidity,
 	}
 	ft.stopCleaner = utils.TimeTick(ft.clean, 2*config.TokenValidity)
 	ch.Add("tokenStore", ft)
-	return ft, nil
+	return &ft, nil
 }
 
 func (f *FileTokenStore) Create(value types.Session) (types.Token, error) {
@@ -71,7 +71,7 @@ func (f *FileTokenStore) Revoke(token string) error {
 }
 
 func (f *FileTokenStore) getSessionFile(token string) string {
-	return filepath.Join(f.root, sessionPrefix+token)
+	return filepath.Join(f.root, SessionPrefix+token)
 }
 
 func (f *FileTokenStore) readFile(token string, read bool) (*types.Token, error) {
@@ -128,7 +128,7 @@ func (f *FileTokenStore) Dispose() error {
 
 func (f *FileTokenStore) forEachSession(fn func(string, os.FileInfo)) error {
 	return filepath.Walk(f.root, func(path string, info os.FileInfo, e error) error {
-		if e != nil || info.IsDir() || !strings.HasPrefix(filepath.Base(path), sessionPrefix) {
+		if e != nil || info.IsDir() || !strings.HasPrefix(filepath.Base(path), SessionPrefix) {
 			return nil
 		}
 		fn(path, info)

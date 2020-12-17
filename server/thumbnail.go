@@ -13,6 +13,7 @@ import (
 	"go-drive/common/task"
 	"go-drive/common/types"
 	"go-drive/common/utils"
+	"go-drive/server/token"
 	"image"
 	_ "image/gif"
 	"image/jpeg"
@@ -179,7 +180,7 @@ func (t *Thumbnail) clean() {
 	n := 0
 	notBefore := time.Now().Add(-t.validity)
 	e := filepath.Walk(t.cacheDir, func(path string, info os.FileInfo, e error) error {
-		if e != nil || info.IsDir() || !strings.HasPrefix(filepath.Base(path), sessionPrefix) {
+		if e != nil || info.IsDir() || !strings.HasPrefix(filepath.Base(path), token.SessionPrefix) {
 			return nil
 		}
 		if info.ModTime().Before(notBefore) {
